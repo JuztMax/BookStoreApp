@@ -14,12 +14,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.bookstoreapp.ui.theme.login.data.MainScreenDataObject
 import com.example.bookstoreapp.ui.theme.main_screen.bottom_menu.BottomMenu
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-@Preview(showBackground = true)
 @Composable
-fun MainScreen() {
+fun MainScreen(navData: MainScreenDataObject) {
     val drawerState = rememberDrawerState(DrawerValue.Open)
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -28,7 +28,7 @@ fun MainScreen() {
             Column(
                 modifier = Modifier.fillMaxWidth(0.7f)
             ) {
-                DrawerHeader()
+                DrawerHeader(navData.email)
                 DrawerBody()
             }
         }

@@ -23,10 +23,10 @@ import com.example.bookstoreapp.ui.theme.DarkBlue
 //import com.google.apps.card.v1.Columns
 
 @Composable
-fun DrawerHeader() {
+fun DrawerHeader(email: String) {
     Column (
         Modifier.fillMaxWidth()
-            .height(220.dp)
+            .height(240.dp)
             .background(DarkBlue),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -43,6 +43,11 @@ fun DrawerHeader() {
             color = Color.White,
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold
+        )
+        Text(
+            email,
+            color = Color.Gray,
+            fontSize = 16.sp
         )
     }
 }
