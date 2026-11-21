@@ -3,16 +3,13 @@ package com.example.bookstoreapp.ui.theme.login
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Button
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,12 +20,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bookstoreapp.R
-import com.example.bookstoreapp.ui.theme.LoginButton
-import com.google.apps.card.v1.Columns
-import com.google.apps.card.v1.Image
 import com.google.firebase.Firebase
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
@@ -37,6 +32,12 @@ import com.google.firebase.auth.auth
 @Composable
 fun LoginScreen() {
 
+    val auth = remember {
+        Firebase.auth
+    }
+    val errorState = remember {
+        mutableStateOf("")
+    }
 
     val emailState = remember {
         mutableStateOf("")
@@ -93,57 +94,80 @@ fun LoginScreen() {
         ) {
             passwordState.value = it
         }
+        if (errorState.value.isNotEmpty()) {
+            Text(
+                text = errorState.value,
+                color = Color.Red,
+                textAlign = TextAlign.Center
+            )
+        }
         Spacer(modifier = Modifier.height(15.dp))
         LoginButton(text = "Sign In") {
-
+            signIn(
+                auth,
+                emailState.value,
+                passwordState.value,
+                onSingInSuccess = {
+                    Log.d("MyLog", "Sign In Success")
+                },
+                onSignInFailure = { error ->
+                    errorState.value = error
+                }
+            )
         }
         LoginButton(text = "Sign Up") {
-
-        }
-    }
-}
-
-private fun signUp(auth: FirebaseAuth, email: String, password: String){
-    auth.createUserWithEmailAndPassword(email, password)
-        .addOnCompleteListener {
-            if (it.isSuccessful){
-                Log.d("MyLog", "Sign Up successful!")
-            } else {
-                Log.d("MyLog", "Sign Up failure!")
-            }
-        }
-}
-
-private fun signIn(auth: FirebaseAuth, email: String, password: String){
-    auth.signInWithEmailAndPassword(email, password)
-        .addOnCompleteListener {
-            if (it.isSuccessful){
-                Log.d("MyLog", "Sign In successful!")
-            } else {
-                Log.d("MyLog", "Sign In failure!")
-            }
-        }
-}
-
-private fun deleteAccount(auth: FirebaseAuth, email: String, password: String){
-    val credential = EmailAuthProvider.getCredential(email, password)
-    auth.currentUser?.reauthenticate(credential)?.addOnCompleteListener {
-        if (it.isSuccessful){
-            auth.currentUser?.delete()?.addOnCompleteListener {
-                if (it.isSuccessful){
-                    Log.d("MyLog", "Account was deleted!")
-                } else {
-                    Log.d("MyLog", "Failure delete account!")
+            signUp(
+                auth,
+                emailState.value,
+                passwordState.value,
+                onSingUpSuccess = {
+                    Log.d("MyLog", "Sign Up Success")
+                },
+                onSignUpFailure = { error ->
+                    errorState.value = error
                 }
-            }
-        } else {
-            Log.d("MyLog", "Failure reauthenticate!")
+            )
         }
     }
-
 }
 
-private fun signOut(auth: FirebaseAuth){
-    auth.signOut()
+fun signUp(
+    auth: FirebaseAuth,
+    email: String,
+    password: String,
+    onSingUpSuccess: () -> Unit,
+    onSignUpFailure: (String) -> Unit
+) {
+    if (email.isBlank() || password.isBlank()){
+        onSignUpFailure("Email and password cannot be empty")
+        return
+    }
+    auth.createUserWithEmailAndPassword(email, password)
+        .addOnCompleteListener { task ->
+            if (task.isSuccessful) onSingUpSuccess()
+        }
+        .addOnFailureListener {
+            onSignUpFailure(it.message ?: "Sing Up Error")
+        }
+}
+
+fun signIn(
+    auth: FirebaseAuth,
+    email: String,
+    password: String,
+    onSingInSuccess: () -> Unit,
+    onSignInFailure: (String) -> Unit
+) {
+    if (email.isBlank() || password.isBlank()){
+        onSignInFailure("Email and password cannot be empty")
+        return
+    }
+    auth.signInWithEmailAndPassword(email, password)
+        .addOnCompleteListener { task ->
+            if (task.isSuccessful) onSingInSuccess()
+        }
+        .addOnFailureListener {
+            onSignInFailure(it.message ?: "Sing In Error")
+        }
 }
 
