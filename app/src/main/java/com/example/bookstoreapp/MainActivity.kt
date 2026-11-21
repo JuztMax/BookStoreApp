@@ -27,6 +27,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.bookstoreapp.data.Book
 import com.example.bookstoreapp.ui.theme.BookStoreAppTheme
+import com.example.bookstoreapp.ui.theme.login.LoginScreen
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 
@@ -34,63 +35,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MainScreen()
+            LoginScreen()
         }
     }
 }
 
-@Composable
-fun MainScreen() {
-    val fs = Firebase.firestore
-    val list = remember {
-        mutableStateOf(emptyList<Book>())
-    }
-
-    fs.collection("books").addSnapshotListener { snapShot, exception ->
-        list.value = snapShot?.toObjects(Book::class.java) ?: emptyList()
-    }
-
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.SpaceBetween
-    ) {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.8f)
-                .padding(60.dp)
-        ) {
-            items(list.value) { book ->
-                Card(
-                    modifier = Modifier.fillMaxWidth()
-                        .padding(10.dp)
-                ) {
-                    Text(text = book.name,
-                        modifier = Modifier.fillMaxWidth()
-                            .wrapContentWidth()
-                            .padding(15.dp))
-                }
-            }
-        }
-        Spacer(modifier = Modifier.height(10.dp))
-        Button(
-            modifier = Modifier.fillMaxWidth()
-                .padding(bottom = 60.dp),
-            onClick = {
-            fs.collection("books")
-                .document().set(
-                    Book(
-                        "My Book",
-                        "bla bla",
-                        "100",
-                        "fiction",
-                        "url"
-                    )
-                )
-        }) {
-            Text(
-                text = "add Book"
-            )
-        }
-    }
-}
