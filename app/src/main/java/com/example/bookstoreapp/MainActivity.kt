@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import com.example.bookstoreapp.data.Book
 import com.example.bookstoreapp.ui.theme.BookStoreAppTheme
 import com.example.bookstoreapp.ui.theme.login.LoginScreen
+import com.example.bookstoreapp.ui.theme.main_screen.MainScreen
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 
@@ -35,7 +36,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            LoginScreen()
+            MainScreen()
         }
     }
 }
