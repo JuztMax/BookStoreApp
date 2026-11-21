@@ -1,12 +1,15 @@
 package com.example.bookstoreapp.ui.theme.login
 
 import android.util.Log
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -15,8 +18,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.bookstoreapp.R
+import com.example.bookstoreapp.ui.theme.LoginButton
 import com.google.apps.card.v1.Columns
+import com.google.apps.card.v1.Image
 import com.google.firebase.Firebase
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
@@ -24,7 +36,7 @@ import com.google.firebase.auth.auth
 
 @Composable
 fun LoginScreen() {
-    val auth = Firebase.auth
+
 
     val emailState = remember {
         mutableStateOf("")
@@ -33,37 +45,60 @@ fun LoginScreen() {
         mutableStateOf("")
     }
 
-    Column(modifier = Modifier.fillMaxSize(),
+    Image(painter = painterResource(
+        id = R.drawable.book_store_bg),
+        contentDescription = "BG",
+        modifier = Modifier.fillMaxSize(),
+        contentScale = ContentScale.FillBounds
+    )
+
+//    Box(
+//        modifier = Modifier.fillMaxSize()
+//
+//    )
+
+    Column(modifier = Modifier.fillMaxSize().padding(
+        start = 50.dp, end = 50.dp
+    ),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        TextField(value = emailState.value, onValueChange = {
+        Image(
+            painter = painterResource(id = R.drawable.books),
+            contentDescription = "Logo",
+            modifier = Modifier.size(170.dp)
+        )
+        Spacer(modifier = Modifier.height(15.dp))
+
+        Text(
+            text = "BookStore App",
+            color = Color.White,
+            fontWeight = FontWeight.Bold,
+            fontSize = 30.sp,
+            fontFamily = FontFamily.Serif
+        )
+        Spacer(modifier = Modifier.height(15.dp))
+
+        RoundedCornerTextField(
+            text = emailState.value,
+            label = "Email"
+        ) {
             emailState.value = it
-        })
-        Spacer(modifier = Modifier.height(10.dp))
-        TextField(value = passwordState.value, onValueChange = {
+        }
+        Spacer(modifier = Modifier.height(15.dp))
+
+        RoundedCornerTextField(
+            text = passwordState.value,
+            label = "Password"
+        ) {
             passwordState.value = it
-        })
-        Spacer(modifier = Modifier.height(10.dp))
-        Button(onClick = {
-            signIn(auth, emailState.value, passwordState.value)
-        }){
-            Text(text = "Sign In")
         }
-        Button(onClick = {
-            signUp(auth, emailState.value, passwordState.value)
-        }){
-            Text(text = "Sign Up")
+        Spacer(modifier = Modifier.height(15.dp))
+        LoginButton(text = "Sign In") {
+
         }
-        Button(onClick = {
-            signOut(auth)
-        }){
-            Text(text = "Sign Out")
-        }
-        Button(onClick = {
-            deleteAccount(auth, emailState.value, passwordState.value)
-        }){
-            Text(text = "Delete Account")
+        LoginButton(text = "Sign Up") {
+
         }
     }
 }
