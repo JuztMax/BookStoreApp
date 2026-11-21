@@ -25,9 +25,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.example.bookstoreapp.data.Book
 import com.example.bookstoreapp.ui.theme.BookStoreAppTheme
 import com.example.bookstoreapp.ui.theme.login.LoginScreen
+import com.example.bookstoreapp.ui.theme.login.data.LoginScreenObject
+import com.example.bookstoreapp.ui.theme.login.data.MainScreenDataObject
 import com.example.bookstoreapp.ui.theme.main_screen.MainScreen
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
@@ -36,7 +42,21 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            LoginScreen()
+            val navController = rememberNavController()
+
+            NavHost(navController = navController,
+                startDestination = LoginScreenObject) {
+
+                composable<LoginScreenObject>{
+                    LoginScreen{ navData ->
+                        navController.navigate(navData)
+                    }
+                }
+                composable<MainScreenDataObject>{ navEntry ->
+                    val navData = navEntry.toRoute<MainScreenDataObject>()
+                    MainScreen()
+                }
+            }
         }
     }
 }

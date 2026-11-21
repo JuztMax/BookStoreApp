@@ -20,7 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bookstoreapp.ui.theme.DarkBlue
-import com.google.apps.card.v1.Columns
+//import com.google.apps.card.v1.Columns
 
 @Composable
 fun DrawerHeader() {
