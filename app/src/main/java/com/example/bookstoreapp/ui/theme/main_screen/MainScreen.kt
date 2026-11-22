@@ -11,16 +11,22 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.bookstoreapp.ui.theme.login.data.MainScreenDataObject
 import com.example.bookstoreapp.ui.theme.main_screen.bottom_menu.BottomMenu
+import kotlinx.coroutines.launch
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun MainScreen(navData: MainScreenDataObject) {
-    val drawerState = rememberDrawerState(DrawerValue.Open)
+fun MainScreen(
+    navData: MainScreenDataObject,
+    onAdminClick: () -> Unit
+) {
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val coroutineScope = rememberCoroutineScope()
     ModalNavigationDrawer(
         drawerState = drawerState,
         modifier = Modifier.fillMaxWidth(),
@@ -29,7 +35,12 @@ fun MainScreen(navData: MainScreenDataObject) {
                 modifier = Modifier.fillMaxWidth(0.7f)
             ) {
                 DrawerHeader(navData.email)
-                DrawerBody()
+                DrawerBody{
+                    coroutineScope.launch {
+                        drawerState.close()
+                    }
+                    onAdminClick()
+                }
             }
         }
     ) {

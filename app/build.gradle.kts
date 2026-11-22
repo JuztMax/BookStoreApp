@@ -5,6 +5,8 @@ plugins {
 
     alias(libs.plugins.plugin.serialization)
     alias(libs.plugins.kotlin.android)
+
+    alias(libs.plugins.androidx.navigation.safeargs)
 }
 
 android {
@@ -56,6 +58,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.kotlinx.serialization.json)
 
@@ -73,6 +76,11 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
 
     implementation(libs.androidx.coil.compose)
+
+    // === SUPABASE STORAGE (НОВОЕ) ===
+    implementation(platform(libs.androidx.supabase.bom))
+    implementation(libs.androidx.supabase.storage)
+    implementation(libs.ktor.client.android)
 
     testImplementation(libs.junit)
 

@@ -6,4 +6,6 @@ plugins {
 
     alias(libs.plugins.plugin.serialization) apply true
     alias(libs.plugins.kotlin.android) apply false
+
+    alias(libs.plugins.androidx.navigation.safeargs) apply false
 }
