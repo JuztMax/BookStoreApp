@@ -12,8 +12,10 @@ navigationCompose = "2.8.3"
 serializationKotlin = "1.7.3"
 gmsVersion = "4.4.2"
 bomVersion = "33.5.1"
+coil = "2.6.0"
 
 [libraries]
+androidx-coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }

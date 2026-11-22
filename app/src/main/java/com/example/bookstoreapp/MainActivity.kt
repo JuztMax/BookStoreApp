@@ -31,6 +31,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.example.bookstoreapp.data.Book
 import com.example.bookstoreapp.ui.theme.BookStoreAppTheme
+import com.example.bookstoreapp.ui.theme.add_book_screen.AddBookScreen
+import com.example.bookstoreapp.ui.theme.add_book_screen.data.AddScreenObject
 import com.example.bookstoreapp.ui.theme.login.LoginScreen
 import com.example.bookstoreapp.ui.theme.login.data.LoginScreenObject
 import com.example.bookstoreapp.ui.theme.login.data.MainScreenDataObject
@@ -45,7 +47,7 @@ class MainActivity : ComponentActivity() {
             val navController = rememberNavController()
 
             NavHost(navController = navController,
-                startDestination = LoginScreenObject) {
+                startDestination = AddScreenObject) {
 
                 composable<LoginScreenObject>{
                     LoginScreen{ navData ->
@@ -55,6 +57,9 @@ class MainActivity : ComponentActivity() {
                 composable<MainScreenDataObject>{ navEntry ->
                     val navData = navEntry.toRoute<MainScreenDataObject>()
                     MainScreen(navData)
+                }
+                composable<AddScreenObject>{ navEntry ->
+                    AddBookScreen()
                 }
             }
         }
