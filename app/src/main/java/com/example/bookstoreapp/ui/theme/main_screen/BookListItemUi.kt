@@ -13,21 +13,23 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bookstoreapp.R
 import coil.compose.AsyncImage
+import com.example.bookstoreapp.data.Book
 import org.jetbrains.annotations.Async
 
 @Composable
-fun BookListItemUi() {
+fun BookListItemUi(book: Book) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp)
     ) {
         AsyncImage(
-            model = R.drawable.book_test,
+            model = book.imageUrl,
             contentDescription = "",
             modifier = Modifier
                 .fillMaxWidth()
@@ -37,20 +39,22 @@ fun BookListItemUi() {
         )
         Spacer(modifier = Modifier.height(10.dp))
         Text(
-            text = "The lord of the rings",
+            text = book.name,
             color = Color.Black,
             fontWeight = FontWeight.Bold,
             fontSize = 20.sp
         )
         Spacer(modifier = Modifier.height(5.dp))
         Text(
-            text = "Description",
+            text = book.description,
             color = Color.Gray,
-            fontSize = 16.sp
+            fontSize = 16.sp,
+            maxLines = 3,
+            overflow = TextOverflow.Ellipsis
         )
         Spacer(modifier = Modifier.height(5.dp))
         Text(
-            text = "50$",
+            text = book.price,
             color = Color.Blue,
             fontWeight = FontWeight.Bold,
             fontSize = 18.sp
