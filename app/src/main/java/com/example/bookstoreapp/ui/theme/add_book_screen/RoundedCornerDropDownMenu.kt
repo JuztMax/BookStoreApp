@@ -21,10 +21,11 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun RoundedCornerDropDownMenu(
+    defCategory: String,
     onOptionSelected: (String) -> Unit
 ) {
     val expanded = remember { mutableStateOf(false) }
-    val selectedOption = remember { mutableStateOf("Bestsellers") }
+    val selectedOption = remember { mutableStateOf(defCategory) }
     val categoriesList = listOf(
         "Fantasy",
         "Drama",

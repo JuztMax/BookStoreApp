@@ -5,13 +5,7 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -41,30 +35,36 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.UUID
 
-// === КОНФИГУРАЦИЯ SUPABASE ===
+// === КОНФИГУРАЦИЯ SUPABASE (ТОЛЬКО ДЛЯ КАРТИНОК) ===
 private const val SUPABASE_URL = "https://xiyuxasweqjadpsmhstd.supabase.co"
 private const val SUPABASE_ANON_KEY = "sb_publishable_EJXnfbQ5HddIuRXeOzHW6A_Aogof9Bf"
 private const val BUCKET_NAME = "book-covers"
 
 @Composable
 fun AddBookScreen(
-    navData: AddScreenObject? = AddScreenObject(),
+    navData: AddScreenObject? = null,
     onSaved: () -> Unit = {}
 ) {
     var selectedCategory by remember { mutableStateOf(navData?.category ?: "") }
-    val title = remember {
-        mutableStateOf(navData?.name ?: "")
-    }
+    val title = remember { mutableStateOf(navData?.name ?: "") }
     val description = remember { mutableStateOf(navData?.description ?: "") }
     val price = remember { mutableStateOf(navData?.price ?: "") }
-    val selectedImageUri = remember { mutableStateOf<Uri?>(null) }
 
-    // Состояние загрузки и контекст
+    val selectedImageUri = remember { mutableStateOf<Uri?>(null) }
+    // Сохраняем старую ссылку на картинку из БД, если мы в режиме редактирования
+    val oldImageUrl = navData?.imageUrl ?: ""
+
     var isLoading by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-
     val firestore = remember { Firebase.firestore }
+
+    // Клиент Supabase только для Storage
+    val supabaseStorage = remember {
+        createSupabaseClient(SUPABASE_URL, SUPABASE_ANON_KEY) {
+            install(Storage)
+        }
+    }
 
     val imageLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -72,9 +72,10 @@ fun AddBookScreen(
         selectedImageUri.value = uri
     }
 
-    // Фоновое изображение
+    // Фоновое изображение: новое выбранное ИЛИ старое из БД
+    val backgroundImageModel = selectedImageUri.value ?: oldImageUrl.takeIf { it.isNotEmpty() }
     Image(
-        painter = rememberAsyncImagePainter(model = selectedImageUri.value),
+        painter = rememberAsyncImagePainter(model = backgroundImageModel),
         contentDescription = "BG",
         modifier = Modifier.fillMaxSize(),
         contentScale = ContentScale.FillBounds,
@@ -82,7 +83,7 @@ fun AddBookScreen(
     )
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(start = 50.dp, end = 50.dp),
+        modifier = Modifier.fillMaxSize().padding(horizontal = 50.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -94,7 +95,7 @@ fun AddBookScreen(
         Spacer(modifier = Modifier.height(15.dp))
 
         Text(
-            text = "Add new book",
+            text = if (navData == null) "Add new book" else "Edit book",
             color = Color.White,
             fontWeight = FontWeight.Bold,
             fontSize = 25.sp,
@@ -102,88 +103,80 @@ fun AddBookScreen(
         )
         Spacer(modifier = Modifier.height(15.dp))
 
-        // === ВОЗВРАЩАЕМ ВЫБОР КАТЕГОРИИ ===
-        RoundedCornerDropDownMenu { selectedItem ->
-            selectedCategory = selectedItem
-        }
-
+        RoundedCornerDropDownMenu(selectedCategory) { selectedCategory = it }
         Spacer(modifier = Modifier.height(15.dp))
 
         RoundedCornerTextField(text = title.value, label = "Title") { title.value = it }
         Spacer(modifier = Modifier.height(15.dp))
+
         RoundedCornerTextField(
-            singleLine = false, maxLines = 5, text = description.value, label = "Description"
+            singleLine = false, maxLines = 5,
+            text = description.value, label = "Description"
         ) { description.value = it }
         Spacer(modifier = Modifier.height(15.dp))
+
         RoundedCornerTextField(text = price.value, label = "Price") { price.value = it }
         Spacer(modifier = Modifier.height(15.dp))
 
         LoginButton(text = "Select image") {
             imageLauncher.launch("image/*")
         }
-
         Spacer(modifier = Modifier.height(10.dp))
 
         LoginButton(text = if (isLoading) "Saving..." else "Save") {
-            selectedImageUri.value?.let { uri ->
-                coroutineScope.launch {
-                    isLoading = true
-                    try {
-                        // 1. Загружаем картинку в Supabase
-                        val imageUrl = uploadImageToSupabase(context, uri)
-
-                        // 2. Сохраняем книгу в Firestore
-                        saveBookToFireStore(
-                            firestore = firestore,
-                            url = imageUrl,
-                            book = Book(
-                                name = title.value,
-                                description = description.value,
-                                price = price.value,
-                                category = selectedCategory
-                            ),
-                            onSaved = {
-                                onSaved()
-                            },
-                            onError = { e ->
-                                println("Ошибка сохранения в БД: ${e.message}")
-                            }
-                        )
-                    } catch (e: Exception) {
-                        println("Ошибка загрузки картинки: ${e.message}")
-                    } finally {
-                        isLoading = false
+            coroutineScope.launch {
+                isLoading = true
+                try {
+                    // 1. Определяем итоговый URL картинки
+                    val finalImageUrl = if (selectedImageUri.value != null) {
+                        // Если выбрали новую - грузим в Supabase
+                        uploadImageToSupabase(supabaseStorage, context, selectedImageUri.value!!)
+                    } else {
+                        // Иначе оставляем старую ссылку
+                        oldImageUrl
                     }
+
+                    // 2. Сохраняем данные книги в Firebase Firestore
+                    saveBookToFireStore(
+                        firestore = firestore,
+                        existingKey = navData?.key, // Передаем ключ для обновления
+                        imageUrl = finalImageUrl,
+                        book = Book(
+                            name = title.value,
+                            description = description.value,
+                            price = price.value,
+                            category = selectedCategory
+                        ),
+                        onSaved = { onSaved() },
+                        onError = { e -> println("Ошибка Firestore: ${e.message}") }
+                    )
+                } catch (e: Exception) {
+                    println("Ошибка операции: ${e.message}")
+                } finally {
+                    isLoading = false
                 }
-            } ?: run {
-                println("Пожалуйста, выберите изображение!")
             }
         }
     }
 }
 
 /**
- * Загрузка изображения в Supabase Storage
+ * Загрузка изображения ТОЛЬКО в Supabase Storage
  */
-private suspend fun uploadImageToSupabase(context: Context, uri: Uri): String {
-    val supabase = createSupabaseClient(
-        supabaseUrl = SUPABASE_URL,
-        supabaseKey = SUPABASE_ANON_KEY
-    ) {
-        install(Storage)
-    }
-
+private suspend fun uploadImageToSupabase(
+    supabase: io.github.jan.supabase.SupabaseClient,
+    context: Context,
+    uri: Uri
+): String {
     val mimeType = context.contentResolver.getType(uri)
     val extension = when (mimeType) {
         "image/jpeg", "image/jpg" -> "jpg"
         "image/png" -> "png"
         "image/webp" -> "webp"
-        "image/gif" -> "gif"
         else -> "png"
     }
 
     val fileName = "${UUID.randomUUID()}.$extension"
-    // ================================================
 
     val bytes = withContext(Dispatchers.IO) {
         context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
@@ -191,29 +184,35 @@ private suspend fun uploadImageToSupabase(context: Context, uri: Uri): String {
     }
 
     supabase.storage[BUCKET_NAME].upload(fileName, bytes)
-
     return supabase.storage[BUCKET_NAME].publicUrl(fileName)
 }
 
 /**
- * Сохранение данных книги в Firestore
+ * Сохранение/Обновление книги в Firebase Firestore
  */
 private fun saveBookToFireStore(
     firestore: FirebaseFirestore,
-    url: String,
+    existingKey: String?,
+    imageUrl: String,
     book: Book,
     onSaved: () -> Unit,
     onError: (Exception) -> Unit
 ) {
-    val db = firestore.collection("books")
-    val key = db.document().id
-    db.document(key)
-        .set(
-            book.copy(
-                key = key,
-                imageUrl = url
-            )
+    val collection = firestore.collection("books")
+
+    // Если есть ключ - обновляем существующий документ, иначе создаем новый
+    val docRef = if (existingKey != null) {
+        collection.document(existingKey)
+    } else {
+        collection.document()
+    }
+
+    docRef.set(
+        book.copy(
+            key = docRef.id, // При создании ID документа должен совпадать с полем key
+            imageUrl = imageUrl
         )
+    )
         .addOnSuccessListener { onSaved() }
         .addOnFailureListener { onError(it) }
 }
