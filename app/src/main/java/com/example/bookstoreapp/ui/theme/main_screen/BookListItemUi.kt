@@ -1,13 +1,20 @@
 package com.example.bookstoreapp.ui.theme.main_screen
 
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -22,7 +29,11 @@ import com.example.bookstoreapp.data.Book
 import org.jetbrains.annotations.Async
 
 @Composable
-fun BookListItemUi(book: Book) {
+fun BookListItemUi(
+    showEditButton: Boolean = false,
+    book: Book,
+    onEditClick: (Book) -> Unit = {}
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -53,11 +64,25 @@ fun BookListItemUi(book: Book) {
             overflow = TextOverflow.Ellipsis
         )
         Spacer(modifier = Modifier.height(5.dp))
-        Text(
-            text = book.price,
-            color = Color.Blue,
-            fontWeight = FontWeight.Bold,
-            fontSize = 18.sp
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                modifier = Modifier.fillMaxWidth().weight(1f),
+                text = book.price,
+                color = Color.Blue,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp
+            )
+            if (showEditButton) IconButton(onClick = {
+                onEditClick(book)
+            }) {
+                Icon(Icons.Default.Edit,
+                    contentDescription = ""
+                )
+            }
+        }
+
     }
 }

@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import com.example.bookstoreapp.R
 import com.example.bookstoreapp.data.Book
+import com.example.bookstoreapp.ui.theme.add_book_screen.data.AddScreenObject
 import com.example.bookstoreapp.ui.theme.login.LoginButton
 import com.example.bookstoreapp.ui.theme.login.RoundedCornerTextField
 import com.google.firebase.Firebase
@@ -47,12 +48,15 @@ private const val BUCKET_NAME = "book-covers"
 
 @Composable
 fun AddBookScreen(
+    navData: AddScreenObject? = AddScreenObject(),
     onSaved: () -> Unit = {}
 ) {
-    var selectedCategory by remember { mutableStateOf("Bestsellers") }
-    val title = remember { mutableStateOf("") }
-    val description = remember { mutableStateOf("") }
-    val price = remember { mutableStateOf("") }
+    var selectedCategory by remember { mutableStateOf(navData?.category ?: "") }
+    val title = remember {
+        mutableStateOf(navData?.name ?: "")
+    }
+    val description = remember { mutableStateOf(navData?.description ?: "") }
+    val price = remember { mutableStateOf(navData?.price ?: "") }
     val selectedImageUri = remember { mutableStateOf<Uri?>(null) }
 
     // Состояние загрузки и контекст

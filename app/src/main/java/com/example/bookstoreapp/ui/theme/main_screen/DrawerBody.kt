@@ -41,6 +41,7 @@ import com.google.firebase.firestore.firestore
 
 @Composable
 fun DrawerBody(
+    onAdmin: (Boolean) -> Unit = {},
     onAdminClick: () -> Unit = {}
 ) {
     val categoriesList = listOf(
@@ -59,6 +60,7 @@ fun DrawerBody(
     ) {
         isAdmin { isAdmin ->
             isAdminState.value = isAdmin
+            onAdmin(isAdmin)
         }
     }
 
