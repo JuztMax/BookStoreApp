@@ -44,6 +44,7 @@ fun DrawerBody(
     onAdmin: (Boolean) -> Unit = {},
     onAdminClick: () -> Unit = {},
     onFavClick: () -> Unit = {},
+    onCategoryClick: (String) -> Unit = {}
 ) {
     val categoriesList = listOf(
         "Favorites",
@@ -96,7 +97,12 @@ fun DrawerBody(
                     Column(
                         modifier = Modifier.fillMaxWidth()
                             .clickable {
-                                onFavClick()
+                                if (categoriesList[0] == item){
+                                    onFavClick()
+                                } else {
+                                    onCategoryClick(item)
+                                }
+
                             }
                     ) {
                         Spacer(modifier = Modifier.height(12.dp))
