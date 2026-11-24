@@ -42,7 +42,8 @@ import com.google.firebase.firestore.firestore
 @Composable
 fun DrawerBody(
     onAdmin: (Boolean) -> Unit = {},
-    onAdminClick: () -> Unit = {}
+    onAdminClick: () -> Unit = {},
+    onFavClick: () -> Unit = {},
 ) {
     val categoriesList = listOf(
         "Favorites",
@@ -94,7 +95,9 @@ fun DrawerBody(
                 items(categoriesList) { item ->
                     Column(
                         modifier = Modifier.fillMaxWidth()
-                            .clickable { }
+                            .clickable {
+                                onFavClick()
+                            }
                     ) {
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(

@@ -30,8 +30,10 @@ import com.example.bookstoreapp.data.Favorite
 import com.example.bookstoreapp.ui.theme.login.data.MainScreenDataObject
 import com.example.bookstoreapp.ui.theme.main_screen.bottom_menu.BottomMenu
 import com.google.firebase.Firebase
+import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
+import com.google.protobuf.Field
 import kotlinx.coroutines.launch
 
 @Composable
@@ -72,20 +74,46 @@ fun MainScreen(
                 DrawerBody(
                     onAdmin = { isAdmin ->
                         isAdminState.value = isAdmin
+                    },
+                    onFavClick = {
+                        getAllFavsIds(db, navData.uid) { favs ->
+                            getAllFavsBooks(db, favs) { books ->
+                                booksListState.value = books
+                            }
+                        }
+                        coroutineScope.launch {
+                            drawerState.close()
+                        }
+                    },
+                    onAdminClick = {
+                        coroutineScope.launch {
+                            drawerState.close()
+                        }
+                        onAdminClick()
                     }
-                ){
-                    coroutineScope.launch {
-                        drawerState.close()
-                    }
-                    onAdminClick()
-                }
+                )
             }
         }
     ) {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             bottomBar = {
-                BottomMenu()
+                BottomMenu(
+                    onFavsClick = {
+                        getAllFavsIds(db, navData.uid) { favs ->
+                            getAllFavsBooks(db, favs) { books ->
+                                booksListState.value = books
+                            }
+                        }
+                    },
+                    onHomeClick = {
+                        getAllFavsIds(db, navData.uid) { favs ->
+                            getAllBooks(db, favs) { books ->
+                                booksListState.value = books
+                            }
+                        }
+                    }
+                )
             }
         ) { paddingValues ->
             LazyVerticalGrid(
@@ -129,6 +157,29 @@ private fun getAllBooks(
     onBooks: (List<Book>) -> Unit
 ){
     db.collection("books")
+        .get()
+        .addOnSuccessListener { task ->
+            val booksList = task.toObjects(Book::class.java).map {
+                if(idsList.contains(it.key)){
+                    it.copy(isFavorite = true)
+                } else {
+                    it
+                }
+            }
+            onBooks(booksList)
+        }
+        .addOnFailureListener {
+
+        }
+}
+
+private fun getAllFavsBooks(
+    db: FirebaseFirestore,
+    idsList: List<String>,
+    onBooks: (List<Book>) -> Unit
+){
+    db.collection("books")
+        .whereIn(FieldPath.documentId(), idsList)
         .get()
         .addOnSuccessListener { task ->
             val booksList = task.toObjects(Book::class.java).map {
