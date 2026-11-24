@@ -48,6 +48,7 @@ fun DrawerBody(
 ) {
     val categoriesList = listOf(
         "Favorites",
+        "All",
         "Fantasy",
         "Drama",
         "Bestsellers"

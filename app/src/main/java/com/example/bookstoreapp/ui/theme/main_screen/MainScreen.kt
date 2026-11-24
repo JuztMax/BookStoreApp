@@ -1,12 +1,8 @@
 package com.example.bookstoreapp.ui.theme.main_screen
 
-import android.annotation.SuppressLint
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -14,26 +10,22 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import com.example.bookstoreapp.data.Book
 import com.example.bookstoreapp.data.Favorite
 import com.example.bookstoreapp.ui.theme.login.data.MainScreenDataObject
 import com.example.bookstoreapp.ui.theme.main_screen.bottom_menu.BottomMenu
+import com.example.bookstoreapp.ui.theme.main_screen.bottom_menu.BottomMenuItem
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
-import com.google.protobuf.Field
 import kotlinx.coroutines.launch
 
 @Composable
@@ -43,10 +35,17 @@ fun MainScreen(
     onAdminClick: () -> Unit
 ) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
+
     val coroutineScope = rememberCoroutineScope()
+
     val booksListState = remember {
         mutableStateOf(emptyList<Book>())
     }
+
+    val selectedBottomItemState = remember {
+        mutableStateOf(BottomMenuItem.Home.title)
+    }
+
     val isAdminState = remember {
         mutableStateOf(false)
     }
@@ -57,7 +56,7 @@ fun MainScreen(
 
     LaunchedEffect(Unit) {
         getAllFavsIds(db, navData.uid) { favs ->
-            getAllBooks(db, favs, "Fantasy") { books ->
+            getAllBooks(db, favs) { books ->
                 booksListState.value = books
             }
         }
@@ -76,6 +75,8 @@ fun MainScreen(
                         isAdminState.value = isAdmin
                     },
                     onFavClick = {
+                        selectedBottomItemState.value = BottomMenuItem.Favs.title
+
                         getAllFavsIds(db, navData.uid) { favs ->
                             getAllFavsBooks(db, favs) { books ->
                                 booksListState.value = books
@@ -93,9 +94,18 @@ fun MainScreen(
                     },
                     onCategoryClick = { category ->
                         getAllFavsIds(db, navData.uid) { favs ->
-                            getAllBooks(db, favs, category) { books ->
-                                booksListState.value = books
+                            if (category == "All"){
+                                getAllBooks(db, favs) { books ->
+                                    booksListState.value = books
+                                }
+                            } else {
+                                getAllBooksFromCategory(db, favs, category) { books ->
+                                    booksListState.value = books
+                                }
                             }
+                        }
+                        coroutineScope.launch {
+                            drawerState.close()
                         }
                     }
                 )
@@ -106,7 +116,9 @@ fun MainScreen(
             modifier = Modifier.fillMaxSize(),
             bottomBar = {
                 BottomMenu(
+                    selectedBottomItemState.value,
                     onFavsClick = {
+                        selectedBottomItemState.value = BottomMenuItem.Favs.title
                         getAllFavsIds(db, navData.uid) { favs ->
                             getAllFavsBooks(db, favs) { books ->
                                 booksListState.value = books
@@ -114,8 +126,10 @@ fun MainScreen(
                         }
                     },
                     onHomeClick = {
+                        selectedBottomItemState.value = BottomMenuItem.Home.title
+
                         getAllFavsIds(db, navData.uid) { favs ->
-                            getAllBooks(db, favs, "Fantasy") { books ->
+                            getAllBooks(db, favs) { books ->
                                 booksListState.value = books
                             }
                         }
@@ -150,6 +164,10 @@ fun MainScreen(
                                     bk
                                 }
                             }
+                            if (selectedBottomItemState.value == BottomMenuItem.Favs.title) {
+                                booksListState.value = booksListState
+                                    .value.filter { it.isFavorite }
+                            }
                         }
                     )
                 }
@@ -158,7 +176,7 @@ fun MainScreen(
     }
 }
 
-private fun getAllBooks(
+private fun getAllBooksFromCategory(
     db: FirebaseFirestore,
     idsList: List<String>,
     category: String,
@@ -167,6 +185,29 @@ private fun getAllBooks(
 ){
     db.collection("books")
         .whereEqualTo("category", category)
+        .get()
+        .addOnSuccessListener { task ->
+            val booksList = task.toObjects(Book::class.java).map {
+                if(idsList.contains(it.key)){
+                    it.copy(isFavorite = true)
+                } else {
+                    it
+                }
+            }
+            onBooks(booksList)
+        }
+        .addOnFailureListener {
+
+        }
+}
+
+private fun getAllBooks(
+    db: FirebaseFirestore,
+    idsList: List<String>,
+    onBooks: (List<Book>) -> Unit,
+
+){
+    db.collection("books")
         .get()
         .addOnSuccessListener { task ->
             val booksList = task.toObjects(Book::class.java).map {
